@@ -21,26 +21,16 @@
  */
 #pragma once
 
-#include <map>
-#include <string>
 
 /**
- * Thrown when a PDB is found to be invalid or unsupported.
+ * Prints information about a PDB.
  */
-class InvalidPdb
-{
-private:
-    const char* _why;
+#if defined(_WIN32) && defined(UNICODE)
 
-public:
+void dumpPdb(const wchar_t* path, bool verbose);
 
-    InvalidPdb(const char* why) : _why(why) {}
+#else
 
-    const char* why() const {
-        return _why;
-    }
-};
+void dumpPdb(const char* path, bool verbose);
 
-using NameMapTable = std::map<std::string, uint32_t>;
-
-NameMapTable readNameMapTable(const uint8_t* data, const uint8_t* dataEnd);
+#endif

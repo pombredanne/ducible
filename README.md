@@ -10,12 +10,29 @@ This is a tool to make builds of Portable Executables (PEs) and PDBs
 repro*ducible*.
 
 Timestamps and other non-deterministic data are embedded in DLLs, EXEs, and
-PDBs. If a DLL is compiled and linked twice without changing any source, the
-DLLs will not be bit-by-bit identical. This tool fixes that.
+PDBs. If some source is compiled and linked twice without changing any source,
+the binary and PDB will not be bit-by-bit identical both times. This tool fixes
+that by modifying DLLs/EXEs in-place and rewriting PDBs.
 
-Builds that are reproducible are very useful for a number of reasons. The site
-https://reproducible-builds.org/ does an excellent job of enumerating those
-reasons.
+Don't worry, Ducible won't mess with the functionality of your executable. All
+changes have no functional effect. It merely transforms one perfectly good
+executable into another perfectly good, yet reproducible(!), executable.
+
+## Why?
+
+In general, reproducible builds give a verifiable path from *source code* to
+*binary code*. There are a number of security reasons and practical reasons for
+why this is good. More specifically, it enables
+
+ * confidence that two parties built a binary with the same environment,
+ * recreating a release bit-for-bit from source code,
+ * recreating debug symbols for a particular version of source code,
+ * verifiable and correct distributed builds,
+ * faster cached builds (both local and distributed),
+ * no spurious changes in binaries under version control.
+
+See also https://reproducible-builds.org/ for more information on why you should
+want this.
 
 ## Using It
 
@@ -33,10 +50,46 @@ As a post-build step, simply run:
 
 The files are overwritten in-place.
 
+## Downloading It
+
+See the [releases][] for downloads.
+
+[releases]: https://github.com/jasonwhite/ducible/releases
+
+## Known Limitations
+
+ 1. This tool cannot prevent you from shooting yourself in the foot. Please
+    don't ever have anything like this in your code:
+
+    ```cpp
+    std::cout << "Build date: " << __DATE__ << " " << __TIME__ << std::endl;
+    ```
+
+    There is nothing that Ducible can do about this. Embedding dates or times
+    might seem useful, but all they do is prevent reproducible builds. Once you
+    have reproducible builds and a proper versioning scheme, embedding this
+    information is pointless.
+
+ 2. Digital signing with trusted timestamping cannot be made reproducible (e.g.,
+    using Microsoft's [`signtool`][signtool]). Even while doing digital signing,
+    you can still gain some of the benefits that using Ducible provides (e.g.,
+    recreating a PDB for debugging purposes). Digital signatures can also be
+    stripped off after being applied to make comparing binaries possible.
+
+ 3. Incremental linking using [`/INCREMENTAL`][incremental-flag] changes the
+    executable quite extensivly upon subsequent builds. Ducible will invalidate
+    the `.ilk` file and force the linker to do a full relink every time. However,
+    this isn't enough to make the build reproducible. You can work around this
+    issue by disabling `/INCREMENTAL` in the linker settings. (Unfortunately
+    this is usually enabled by default for `Debug` builds in Visual Studio.)
+
+[signtool]: https://msdn.microsoft.com/en-us/library/windows/desktop/aa387764.aspx
+[incremental-flag]: https://msdn.microsoft.com/en-us/library/4khtbfyf.aspx
+
 ## Building It
 
-This is a very simple C++ program. There are no third party dependencies and it
-should be buildable and runnable on any platform (even non-Windows!).
+This is written in C++11. There are no third party dependencies and it should be
+buildable and runnable on any platform (even non-Windows!).
 
 Required build tools:
 
@@ -60,20 +113,15 @@ issue or, better yet, a pull request.
 ### Linux
 
 Although this is primarily a Windows utility, it was developed in a Linux
-environment simply because it is faster and easier. One might also want to use
-it for compiling Windows binaries on Linux. Thus, it builds and runs on Linux as
+environment simply because it was faster and easier. One might also want to use
+it when compiling Windows binaries on Linux. Thus, it builds and runs on Linux as
 well.
 
 To build it, just run `make`.
 
 ### OS X
 
-This hasn't been tested on OS X, but it probably works as there is nothing
-Linux-specific in the code.
-
 To build it, just run `make`.
-
-If you find that this works, please submit an issue letting me know.
 
 ## Related Work
 

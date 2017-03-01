@@ -26,9 +26,10 @@
 #include <codecvt>
 #include <string>
 #include <sstream>
+#include <locale>
 
 #ifdef _WIN32
-#   include <Windows.h>
+#   include <windows.h>
 #endif
 
 template<> const FileMode<char> FileMode<char>::readExisting("rb");
